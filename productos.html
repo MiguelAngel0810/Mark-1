@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Nuevo Producto</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Times New Roman', serif;
+      background: #e9ecef; /* Fondo gris claro */
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .form-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 500px;
+      padding: 25px 30px;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .form-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .form-title {
+      text-align: center;
+      color: #343a40;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .form-control, .form-select {
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .btn-success, .btn-danger {
+      border-radius: 10px;
+      width: 120px;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 10px;
+      text-align: center;
+      width: 100%;
+      font-size: 14px;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    // Bloqueo de acceso si no es admin
+    const token = localStorage.getItem("token");
+    const rol = localStorage.getItem("rol");
+    if (!token || rol !== "admin") {
+      alert("Acceso denegado. Solo administradores.");
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <div class="form-card">
+    <h3 class="form-title">Agregar Nuevo Producto</h3>
+    <form id="formProducto">
+      <div class="mb-3">
+        <label class="form-label">Nombre del Producto</label>
+        <input name="nombre" class="form-control" placeholder="Ej: Coca Cola" required/>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Precio (S/.)</label>
+        <input name="precio" type="number" step="0.01" class="form-control" placeholder="Ej: 3.50" required/>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Categoría</label>
+        <select name="categoria_id" id="selectCategoria" class="form-select" required></select>
+      </div>
+      <div class="text-center mt-4">
+        <button class="btn btn-success me-2">Guardar</button>
+        <a href="index.html" class="btn btn-danger">Cancelar</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const API = "http://localhost:3000";
+
+    // Cargar categorías disponibles
+    async function cargarCategorias() {
+      try {
+        const res = await fetch(`${API}/categorias`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Error al cargar categorías");
+
+        const categorias = await res.json();
+        const select = document.getElementById("selectCategoria");
+
+        categorias.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.nombre;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error(err);
+        alert("No se pudieron cargar las categorías");
+      }
+    }
+
+    // Guardar producto
+    document.getElementById("formProducto").addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const data = {
+        nombre: e.target.nombre.value,
+        precio: e.target.precio.value,
+        categoria_id: e.target.categoria_id.value
+      };
+
+      try {
+        const res = await fetch(`${API}/productos`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) throw new Error("Error al guardar producto");
+
+        alert("✅ Producto agregado con éxito");
+        window.location = "index.html";
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo guardar el producto");
+      }
+    });
+
+    cargarCategorias();
+  </script>
+
+  <footer>
+    <p>© 2025 - Examen | Galvan Vilchez Miguel Angel</p>
+  </footer>
+
+</body>
+</html>
